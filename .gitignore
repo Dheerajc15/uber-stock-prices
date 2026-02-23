@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Outputs (keep folders but ignore generated files if you want)
+outputs/figures/*.png
+outputs/tables/*.csv
+outputs/metrics/*.json
+
+# OS
+.DS_Store
+Thumbs.db

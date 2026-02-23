@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uber-stock-analysis"
+version = "0.1.0"
+description = "Modular finance-style analysis of Uber stock prices"
+requires-python = ">=3.10"
+dependencies = [
+    "pandas",
+    "numpy",
+    "matplotlib",
+    "seaborn",
+    "scipy",
+    "statsmodels",
+    "scikit-learn",
+    "jupyter",
+    "ipykernel"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

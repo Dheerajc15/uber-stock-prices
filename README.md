@@ -1,57 +1,79 @@
-# Statistical Hypothesis Testing & Time-Series Analysis of Uber Stock Prices
+# Uber Stock (UBER) — Finance-Style Returns & Risk Analysis
 
-## 🔍 Project Overview
+This project analyzes **Uber (UBER) stock** using a **finance-style workflow** built in Python with a modular structure.  
+Instead of relying on raw price-level analysis (which can be misleading for statistical inference), the project pivots to **daily returns and log-returns**, which are the standard units for risk and time-series analysis in finance.
 
-### 🧾 Data Acquisition & Preprocessing
-
-* Fetched daily Uber stock data from Yahoo Finance (May 10, 2019 – Feb 5, 2025)
-* Cleaned data using:
-
-  * Date formatting and parsing
-  * Handling missing values and duplicates
-  * Outlier detection using Interquartile Range (IQR)
-
-### 📊 Exploratory Data Analysis (EDA)
-
-* Time-series visualizations of stock trends
-* Distribution plots (histograms, KDEs, box plots)
-* Heatmaps for feature correlations
-* Computed summary statistics, skewness, and kurtosis
-
-### 📈 Statistical Inference
-
-* **Normality Test**: Shapiro–Wilk test
-* **Hypothesis Testing**:
-
-  * Independent t-tests (e.g., weekday vs. weekend closing prices)
-  * Chi-square tests (e.g., price vs. volume category relationships)
-  * One-way and Two-way ANOVA (e.g., effect of market period on prices)
-
-### 🤖 Regression Modeling
-
-* Built **OLS regression models** using StatsModels:
-
-  * **Simple Linear Regression** (e.g., Close \~ Open)
-  * **Multiple Linear Regression** (e.g., Close \~ Open + High + Low + Volume)
-* Evaluated models using:
-
-  * R² Score
-  * Mean Squared Error (MSE)
-  * Root Mean Squared Error (RMSE)
-  * Mean Absolute Error (MAE)
-* Visualized residuals and predicted vs. actual price values
+The repository is structured for **portfolio presentation**, reproducibility, and clean execution in **VS Code**.
 
 ---
 
-## 📦 Technologies Used
+## Project Objective
 
-* Python
-* Jupyter Notebook
-* Pandas, NumPy
-* Matplotlib, Seaborn
-* SciPy, StatsModels
+The goal of this project is to:
+
+- Build a **modular, reusable financial analytics pipeline** for stock data
+- Analyze **return behavior** rather than only raw prices
+- Quantify risk using practical metrics such as:
+  - **Annualized return**
+  - **Annualized volatility**
+  - **Sharpe ratio**
+  - **Value at Risk (VaR)**
+  - **Conditional Value at Risk (CVaR)**
+  - **Maximum drawdown**
+- Run key return diagnostics (normality, stationarity, volatility clustering)
+- Create a simple **baseline model** for next-day return prediction
 
 ---
 
-```
+## Dataset
 
+- Source: **Yahoo Finance historical Uber stock data**
+- File: `data/raw/uber_stock_data.csv`
+
+### Data columns used
+- `Date`
+- `Open`
+- `High`
+- `Low`
+- `Close`
+- `Adj Close` (preferred for return calculations)
+- `Volume`
+
+---
+
+## Project Structure
+
+```text
+uber-stock-prices/
+│
+├── data/
+│   ├── raw/
+│   │   └── uber_stock_data.csv
+│   └── processed/
+│
+├── notebooks/
+│   └── report.ipynb
+│
+├── outputs/
+│   ├── figures/
+│   ├── metrics/
+│   └── tables/
+│
+├── scripts/
+│   └── run_pipeline.py
+│
+├── src/
+│   └── uber_stock/
+│       ├── __init__.py
+│       ├── config.py
+│       ├── data_loader.py
+│       ├── features.py
+│       ├── diagnostics.py
+│       ├── plots.py
+│       ├── models.py
+│       └── pipeline.py
+│
+├── pyproject.toml
+├── requirements.txt
+├── .gitignore
+└── README.md
