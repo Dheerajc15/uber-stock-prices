@@ -21,6 +21,32 @@ def run_return_diagnostics(df: pd.DataFrame) -> dict:
             "Need at least 30 for meaningful diagnostic tests."
         )
 
+    # ── Scale sanity check ────────────────────────────────────────────────
+    # Decimal daily log-returns for any liquid equity should have
+    # std in the range 0.005 – 0.08 (i.e. 0.5% – 8% per day).
+    # Values > 0.10 almost certainly mean pct-scaled data was passed in,
+    # which would make annualized_volatility and VaR wildly wrong.
+    r_std = float(r.std())
+    if r_std > 0.10:
+        raise ValueError(
+            f"log_return std = {r_std:.6f}. "
+            "This is too large for DECIMAL daily log-returns "
+            "(expected range 0.005–0.08 for a liquid equity). "
+            "Likely cause: pre-IPO rows in the CSV are producing a single "
+            "enormous return on the first real trading day. "
+            "Fix: ensure data_loader.py drops all rows before "
+            "the UBER IPO date (2019-05-10), or the 'log_return' column "
+            "is accidentally receiving percentage-scaled values."
+        )
+    if r_std < 0.001:
+        raise ValueError(
+            f"log_return std = {r_std:.8f}. "
+            "This is too small for DECIMAL daily log-returns "
+            "(expected range 0.005–0.08). "
+            "Check that features.py sets "
+            "log_return = ln(price / price.shift(1)) without dividing further."
+        )
+
     results = {}
 
     # ── Normality: Jarque-Bera ─────────────────────────────────────────────
@@ -76,14 +102,10 @@ def compute_risk_metrics(
         years = (last_date - first_date).days / 365.25
         CAGR  = (P_final / P_initial) ^ (1 / years) - 1
 
-    This is more accurate than dividing len(df) by 252 because it accounts
-    for the precise number of elapsed calendar days rather than assuming
-    exactly 252 trading days per year.
-
     Annualized Volatility
     ---------------------
     std(log_return) × √252, where log_return is in DECIMAL form.
-    Typical range for UBER: 40–60%.
+    Typical range for UBER: 40–65%.
 
     VaR / CVaR
     ----------
@@ -91,6 +113,7 @@ def compute_risk_metrics(
     VaR 95%  = 5th percentile of the daily simple-return distribution.
     CVaR 95% = mean of all returns at or below the VaR threshold.
     Both are negative numbers (losses).
+    Typical range for UBER: VaR ≈ −3% to −5%, CVaR ≈ −5% to −8%.
     """
     required_cols = {"simple_return", "log_return", "drawdown", "price"}
     missing = required_cols - set(df.columns)
@@ -103,21 +126,34 @@ def compute_risk_metrics(
     r_simple = df["simple_return"].dropna()
     r_log    = df["log_return"].dropna()
 
+    # ── Scale sanity check (matches run_return_diagnostics guard) ─────────
+    r_log_std = float(r_log.std())
+    if r_log_std > 0.10:
+        raise ValueError(
+            f"log_return std = {r_log_std:.6f} in compute_risk_metrics. "
+            "This is too large for DECIMAL daily log-returns "
+            "(expected 0.005–0.08). "
+            "The DataFrame likely contains pre-IPO rows — "
+            "ensure data_loader.py drops all rows before 2019-05-10."
+        )
+
     # ── Annualized return — CAGR using actual calendar days ───────────────
-    p_initial = float(df["price"].dropna().iloc[0])
-    p_final   = float(df["price"].dropna().iloc[-1])
+    p_initial  = float(df["price"].dropna().iloc[0])
+    p_final    = float(df["price"].dropna().iloc[-1])
     first_date = df.index[0]
     last_date  = df.index[-1]
-    calendar_days = (last_date - first_date).days
-    years = calendar_days / 365.25
+    years      = (last_date - first_date).days / 365.25
 
-    if years > 0 and p_initial > 0:
-        ann_ret = (p_final / p_initial) ** (1.0 / years) - 1.0
-    else:
-        ann_ret = float("nan")
+    ann_ret = (
+        (p_final / p_initial) ** (1.0 / years) - 1.0
+        if years > 0 and p_initial > 0
+        else float("nan")
+    )
 
     # ── Annualized volatility from DECIMAL log-returns ────────────────────
-    ann_vol = float(r_log.std() * np.sqrt(252))
+    # std is in decimal/day (e.g. 0.028 for a typical UBER trading day).
+    # Multiply by √252 to scale to annual (e.g. 0.028 × 15.87 ≈ 0.44 = 44%).
+    ann_vol = float(r_log_std * np.sqrt(252))
 
     # ── Sharpe ratio ───────────────────────────────────────────────────────
     rf_daily     = (1 + risk_free_rate_annual) ** (1.0 / 252) - 1
